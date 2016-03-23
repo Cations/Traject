@@ -39,18 +39,24 @@ methods.custom = function (self, prop)
 end
 
 if love and love.math and love.math.newBezierCurve then
-    methods.cubicBezier = function (self, prop)
-        if prop.curve and type(prop.curve) == "table" and #prop.curve >= 4 then
-            local x1, y1, x2, y2 = unpack(prop.curve)
-            local curve = love.math.newBezierCurve(0, 0, x1, y1, x2, y2, 1, 1)
+    methods.bezier = function (self, prop)
+        if prop.curve and type(prop.curve) == "table" and #prop.curve % 2 == 0 then
+            local points = {0, 0, unpack(prop.curve)}
+
+            table.insert(points, 1)
+            table.insert(points, 1)
+
+            local curve = love.math.newBezierCurve(points)
 
             local f = function (t, b, c, d)
                 return c * curve:evaluate(t/d) + b
             end
 
             add(self, prop, f)
+        elseif not prop.curve then
+            add(self, prop, ease.linear)
         else
-            error("cubicBezier expects a property called curve of type table with at least 4 numbers from 0 to 1", 2)
+            error("bezier expects a property called curve of type table with even number of elements", 2)
         end
 
         return self
